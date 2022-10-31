@@ -62,11 +62,37 @@ fun EditNumberField(
         )
 }
 
+@Composable
+fun RoundTipRow(
+        roundUp: Boolean,
+        onRoundUpChanged: (Boolean) -> Unit,
+        modifier: Modifier = Modifier
+) {
+    Row (
+        modifier = Modifier
+            .fillMaxWidth()
+            .size(48.dp),
+        verticalAlignment = Alignment.CenterVertically
+            ) {
+        Text(text = stringResource(id = R.string.round_up_tip))
+        Switch(
+            modifier = modifier
+                .fillMaxWidth()
+                .wrapContentWidth(Alignment.End),
+            checked = roundUp,
+            onCheckedChange = onRoundUpChanged
+        )
+    }
+}
+
 private fun calculateTip(
     amount: Double,
-    tipPercent: Double = 15.0
+    tipPercent: Double = 15.0,
+    roundUp: Boolean
 ): String {
-    val tip = tipPercent / 100 * amount
+    var tip = tipPercent / 100 * amount
+    if (roundUp)
+        tip = kotlin.math.ceil(tip)
     return NumberFormat.getCurrencyInstance().format(tip)
 }
 
@@ -74,12 +100,13 @@ private fun calculateTip(
 fun TipTimeScreen(modifier: Modifier = Modifier) {
     var amountInput by remember { mutableStateOf("") }
     var tipInput by remember { mutableStateOf("") }
+    var roundUp by remember { mutableStateOf(false) }
 
     val focusManager = LocalFocusManager.current
     val amount = amountInput.toDoubleOrNull() ?: 0.0
     val tipValue = tipInput.toDoubleOrNull() ?: 0.0
 
-    val tip = calculateTip(amount, tipValue)
+    val tip = calculateTip(amount, tipValue, roundUp)
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -115,6 +142,7 @@ fun TipTimeScreen(modifier: Modifier = Modifier) {
                 onDone = { focusManager.clearFocus() }
             )
         )
+        RoundTipRow(roundUp = roundUp, onRoundUpChanged = { roundUp = it })
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = stringResource(id = R.string.tip_amount, tip),
